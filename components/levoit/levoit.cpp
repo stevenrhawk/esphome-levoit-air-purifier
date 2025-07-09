@@ -85,33 +85,34 @@ void Levoit::maint_task_() {
           static_cast<uint32_t>(LevoitState::WIFI_LIGHT_FLASH) +
           static_cast<uint32_t>(LevoitState::WIFI_LIGHT_OFF);
 
-        // check if lights need to be changed
-        if ((previousState & wifiLights) != (current_state_ & wifiLights)) {
-          if (wifiConnected || haConnected) {
-            if (haConnected) {
-              // send solid
-              send_command_(LevoitCommand {
-                .payloadType = LevoitPayloadType::SET_WIFI_STATUS_LED,
-                .packetType = LevoitPacketType::SEND_MESSAGE,
-                .payload = {0x00, 0x01, 0x7D, 0x00, 0x7D, 0x00, 0x00}
-              });
-            } else {
-              // Blink
-              send_command_(LevoitCommand {
-                .payloadType = LevoitPayloadType::SET_WIFI_STATUS_LED,
-                .packetType = LevoitPacketType::SEND_MESSAGE,
-                .payload = {0x00, 0x02, 0xF4, 0x01, 0xF4, 0x01, 0x00}
-              }); 
-            }
-          } else {
-            // Off
-            send_command_(LevoitCommand {
-              .payloadType = LevoitPayloadType::SET_WIFI_STATUS_LED,
-              .packetType = LevoitPacketType::SEND_MESSAGE,
-              .payload = {0x00, 0x00, 0xF4, 0x01, 0xF4, 0x01, 0x00}
-            });
-          }
-        }
+// --- DISABLE Wi-Fi LED control (causes 0x0129A1 error on newer Core 300S) ---
+// if ((previousState & wifiLights) != (current_state_ & wifiLights)) {
+//   if (wifiConnected || haConnected) {
+//     if (haConnected) {
+//       // send solid
+//       send_command_(LevoitCommand {
+//         .payloadType = LevoitPayloadType::SET_WIFI_STATUS_LED,
+//         .packetType  = LevoitPacketType::SEND_MESSAGE,
+//         .payload     = {0x00, 0x01, 0x7D, 0x00, 0x7D, 0x00, 0x00}
+//       });
+//     } else {
+//       // Blink
+//       send_command_(LevoitCommand {
+//         .payloadType = LevoitPayloadType::SET_WIFI_STATUS_LED,
+//         .packetType  = LevoitPacketType::SEND_MESSAGE,
+//         .payload     = {0x00, 0x02, 0xF4, 0x01, 0xF4, 0x01, 0x00}
+//       });
+//     }
+//   } else {
+//     // Off
+//     send_command_(LevoitCommand {
+//       .payloadType = LevoitPayloadType::SET_WIFI_STATUS_LED,
+//       .packetType  = LevoitPacketType::SEND_MESSAGE,
+//       .payload     = {0x00, 0x00, 0xF4, 0x01, 0xF4, 0x01, 0x00}
+//     });
+//   }
+// }  // ───────────────────────────────────────────────────────────────────
+
       }
 
       uint32_t removeBits = current_state_ & req_on_state_;

@@ -81,10 +81,6 @@ void Levoit::maint_task_() {
       if (previousState != current_state_) {
         ESP_LOGV(TAG, "State Changed from %u to %u", previousState, current_state_);
 
-        uint32_t wifiLights = 
-          static_cast<uint32_t>(LevoitState::WIFI_LIGHT_SOLID) +
-          static_cast<uint32_t>(LevoitState::WIFI_LIGHT_FLASH) +
-          static_cast<uint32_t>(LevoitState::WIFI_LIGHT_OFF);
 
 // Wi-Fi status LED is hard-disabled on 2024+ Core 300 S FW
 

@@ -134,6 +134,11 @@ class Levoit : public Component, public uart::UARTDevice {
   void maint_task_();
   void command_sync_();
   void send_command_(const LevoitCommand &command);
+  /** Build & send the 20-byte “extended” payloads used by lock /
+   *  display brightness / night-light on the Core 300 S (2024+ FW) */
+  void send_long_payload_(LevoitPayloadType pt,
+                          uint8_t purpose_code,
+                          uint8_t byte15_value);
   void process_raw_command_(LevoitCommand command);
   void send_raw_command(LevoitCommand command);
   void set_bit_(uint32_t &state, bool condition, LevoitState bit);

@@ -8,6 +8,7 @@
 #include "freertos/queue.h"
 #include <freertos/semphr.h>
 #include <vector>
+#include <unordered_map>
 
 namespace esphome {
 namespace levoit {

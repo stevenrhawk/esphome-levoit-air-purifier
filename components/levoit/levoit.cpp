@@ -4,6 +4,7 @@
 #include "esphome/core/log.h"
 #include "esphome/core/util.h"
 #include "esphome.h"
+#include <array>
 
 namespace esphome {
 namespace levoit {

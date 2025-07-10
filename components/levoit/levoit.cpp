@@ -85,33 +85,7 @@ void Levoit::maint_task_() {
           static_cast<uint32_t>(LevoitState::WIFI_LIGHT_FLASH) +
           static_cast<uint32_t>(LevoitState::WIFI_LIGHT_OFF);
 
-// --- DISABLE Wi-Fi LED control (causes 0x0129A1 error on newer Core 300S) ---
-// if ((previousState & wifiLights) != (current_state_ & wifiLights)) {
-//   if (wifiConnected || haConnected) {
-//     if (haConnected) {
-//       // send solid
-//       send_command_(LevoitCommand {
-//         .payloadType = LevoitPayloadType::SET_WIFI_STATUS_LED,
-//         .packetType  = LevoitPacketType::SEND_MESSAGE,
-//         .payload     = {0x00, 0x01, 0x7D, 0x00, 0x7D, 0x00, 0x00}
-//       });
-//     } else {
-//       // Blink
-//       send_command_(LevoitCommand {
-//         .payloadType = LevoitPayloadType::SET_WIFI_STATUS_LED,
-//         .packetType  = LevoitPacketType::SEND_MESSAGE,
-//         .payload     = {0x00, 0x02, 0xF4, 0x01, 0xF4, 0x01, 0x00}
-//       });
-//     }
-//   } else {
-//     // Off
-//     send_command_(LevoitCommand {
-//       .payloadType = LevoitPayloadType::SET_WIFI_STATUS_LED,
-//       .packetType  = LevoitPacketType::SEND_MESSAGE,
-//       .payload     = {0x00, 0x00, 0xF4, 0x01, 0xF4, 0x01, 0x00}
-//     });
-//   }
-// }  // ───────────────────────────────────────────────────────────────────
+// Wi-Fi status LED is hard-disabled on 2024+ Core 300 S FW
 
       }
 
@@ -150,20 +124,16 @@ void Levoit::command_sync_() {
 
     if (req_on_state_ & static_cast<uint32_t>(LevoitState::DISPLAY) || req_off_state_ & static_cast<uint32_t>(LevoitState::DISPLAY)) {
         bool commandState = req_on_state_ & static_cast<uint32_t>(LevoitState::DISPLAY);
-        send_command_(LevoitCommand {
-          .payloadType = LevoitPayloadType::SET_SCREEN_BRIGHTNESS,
-          .packetType = LevoitPacketType::SEND_MESSAGE,
-          .payload = {0x00, commandState ? (uint8_t) 0x64 : (uint8_t) 0x00}
-        });
+        send_long_payload_(LevoitPayloadType::SET_SCREEN_BRIGHTNESS,
+                           0x02,
+                           commandState ? 0x64 : 0x00);        // 0 % / 100 %
     }
 
     if (req_on_state_ & static_cast<uint32_t>(LevoitState::DISPLAY_LOCK) || req_off_state_ & static_cast<uint32_t>(LevoitState::DISPLAY_LOCK)) {
       bool commandState = req_on_state_ & static_cast<uint32_t>(LevoitState::DISPLAY_LOCK);
-      send_command_(LevoitCommand {
-        .payloadType = LevoitPayloadType::SET_DISPLAY_LOCK,
-        .packetType = LevoitPacketType::SEND_MESSAGE,
-        .payload = {0x00, commandState}
-      });
+      send_long_payload_(LevoitPayloadType::SET_DISPLAY_LOCK,
+                         0x01,                               // purpose code
+                         commandState ? 0x01 : 0x00);        // byte 15
     }
 
     // fan mode
@@ -194,7 +164,9 @@ void Levoit::command_sync_() {
       });          
 
     // fan speed
-    if (req_on_state_ && fanChangeMask && (current_state_ && static_cast<uint32_t>(LevoitState::POWER) || current_state_ && static_cast<uint32_t>(LevoitState::FAN_MANUAL)))  {
+    if ((req_on_state_ & fanChangeMask) &&
+        (current_state_ & (uint32_t)LevoitState::POWER ||
+         current_state_ & (uint32_t)LevoitState::FAN_MANUAL)) {
       if (req_on_state_ & static_cast<uint32_t>(LevoitState::FAN_SPEED1)) {
         send_command_(LevoitCommand {
           .payloadType = LevoitPayloadType::SET_FAN_MANUAL,
@@ -245,23 +217,17 @@ void Levoit::command_sync_() {
 
     //Night Light
     if (req_on_state_ & static_cast<uint32_t>(LevoitState::NIGHTLIGHT_OFF)) {
-      send_command_(LevoitCommand {
-        .payloadType = LevoitPayloadType::SET_NIGHTLIGHT,
-        .packetType = LevoitPacketType::SEND_MESSAGE,
-        .payload = {0x00, 0x00, 0x00}
-      });            
+      send_long_payload_(LevoitPayloadType::SET_NIGHTLIGHT,
+                         0x03,
+                         0x00);                   // 0x00 / 0x32 / 0x64
     } else if (req_on_state_ & static_cast<uint32_t>(LevoitState::NIGHTLIGHT_LOW)) {
-      send_command_(LevoitCommand {
-        .payloadType = LevoitPayloadType::SET_NIGHTLIGHT,
-        .packetType = LevoitPacketType::SEND_MESSAGE,
-        .payload = {0x00, 0x00, 0x32}
-      });   
+      send_long_payload_(LevoitPayloadType::SET_NIGHTLIGHT,
+                         0x03,
+                         0x32);                   // 0x00 / 0x32 / 0x64
     } else if (req_on_state_ & static_cast<uint32_t>(LevoitState::NIGHTLIGHT_HIGH)) {
-      send_command_(LevoitCommand {
-        .payloadType = LevoitPayloadType::SET_NIGHTLIGHT,
-        .packetType = LevoitPacketType::SEND_MESSAGE,
-        .payload = {0x00, 0x00, 0x64}
-      });   
+      send_long_payload_(LevoitPayloadType::SET_NIGHTLIGHT,
+                         0x03,
+                         0x64);                   // 0x00 / 0x32 / 0x64
     }
 
     // Filter Reset
@@ -621,6 +587,23 @@ void Levoit::send_command_(const LevoitCommand &command) {
   if (xQueueSend(tx_queue_, &modified_command, pdMS_TO_TICKS(10)) != pdTRUE) {
     ESP_LOGE(TAG, "Failed to send data to tx queue.");
   }
+}
+
+void Levoit::send_long_payload_(LevoitPayloadType pt,
+                                uint8_t purpose_code,
+                                uint8_t byte15_value)
+{
+  std::array<uint8_t, 20> payload = {
+      0x00,0x05,0x00,0x02,          // bytes 0–3  (fixed)
+      0x01, purpose_code,           // 4:00 5:purpose
+      0x01,0x00,                    // 6–7
+      0x00,0x01,0x00,0x00,0x01,0x01,0x00,0x01, // 8–14 fixed
+      byte15_value,                 // 15 ← the value we care about
+      0x00,0x73,0x02,0x00           // 16–19 fixed
+  };
+
+  send_command_({pt, LevoitPacketType::SEND_MESSAGE,
+                 std::vector<uint8_t>(payload.begin(), payload.end())});
 }
 
 void Levoit::set_command_delay(int delay) {

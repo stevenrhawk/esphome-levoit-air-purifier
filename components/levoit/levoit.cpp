@@ -588,7 +588,7 @@ void Levoit::send_command_(const LevoitCommand &command) {
 
 void Levoit::send_long_payload_(LevoitPayloadType pt,
                                 uint8_t purpose_code,
-                                uint8_t byte8_value)   // ← this byte goes at index 8
+                                uint8_t byte8_value)   // this byte goes at index 8
 {
   /* 20-byte body that follows 01 32 40 … */
   std::vector<uint8_t> payload = {

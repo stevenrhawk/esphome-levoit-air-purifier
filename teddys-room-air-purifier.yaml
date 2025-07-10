@@ -1,0 +1,89 @@
+esphome:
+  name: "teddys-room-air-purifier"
+  friendly_name: "Teddys Room Air Purifier"
+
+esp32:
+  board: esp32dev
+  framework:
+    type: esp-idf
+    sdkconfig_options:
+      CONFIG_FREERTOS_UNICORE: y
+
+external_components:
+  - source: github://stevenrhawk/esphome-levoit-air-purifier
+    components: [levoit]
+
+logger:
+  baud_rate: 115200
+
+# Enable Home Assistant API
+api:
+
+ota:
+  - platform: esphome
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  
+  ap:
+    ssid: "Teddys Air Purifier"
+    password: !secret ap_password
+
+captive_portal:
+  
+web_server:
+
+uart:
+  tx_pin: GPIO17
+  rx_pin: GPIO16
+  baud_rate: 115200
+
+levoit:
+  id: levoit1
+  model: core300s
+  command_delay: 500    # give the MCU more breathing room between bytes
+  command_timeout: 500  # wait half-a-second for the ACK instead of 200 ms
+  status_poll_seconds:  30  # and actually flip on that status poll
+
+fan:
+  - platform: levoit
+    name: Levoit Purifier
+
+sensor:
+#   Uptime sensor.
+  - platform: uptime
+    name: Uptime
+
+# WiFi Signal sensor.
+  - platform: wifi_signal
+    name: WiFi Signal
+    update_interval: 60s
+
+  # PM2.5 sensor
+  - platform: levoit
+    pm_2_5:
+      name: PM2.5
+    air_quality:
+      name: Air Quality Index
+
+switch:
+  - platform: levoit
+    display_lock:
+      name: "Display Lock"
+    display_on:
+      name: "Display On"
+    power:
+      name: "Master Power"
+
+button:
+  - platform: levoit
+    filter_reset:
+      name: "Filter Reset"
+
+select:
+  - platform: levoit
+    fan_mode:
+      name: "Fan Mode"
+    auto_mode:
+      name: "Auto Mode"

@@ -591,18 +591,17 @@ void Levoit::send_long_payload_(LevoitPayloadType pt,
                                 uint8_t byte8_value)   // ← this byte goes at index 8
 {
   /* 20-byte body that follows 01 32 40 … */
-  std::array<uint8_t, 20> payload = {
-      0x00,0x05,0x00,0x02,        // 0-3   fixed
-      0x01, purpose_code,         // 4-5   0x01, 0x01/0x02/0x03
-      0x01,0x00,                  // 6-7   fixed
-      byte8_value,                // 8     value we care about (0x00/0x32/0x64 …)
-      0x01,0x00,0x00,0x01,0x01,0x00,   // 9-14 fixed
-      0x00,                       // 15    always 0x00 on 300 S
-      0x00,0x73,0x02,0x00         // 16-19 trailer
+  std::vector<uint8_t> payload = {
+      0x00, 0x05, 0x00, 0x02,        // 0-3   fixed
+      0x01, purpose_code,            // 4-5   
+      0x01, 0x00,                    // 6-7   fixed
+      byte8_value,                   // 8     
+      0x01, 0x00, 0x00, 0x01, 0x01, 0x00,   // 9-14 fixed
+      0x00,                          // 15    
+      0x00, 0x73, 0x02, 0x00         // 16-19 trailer
   };
 
-  send_command_({pt, LevoitPacketType::SEND_MESSAGE,
-                 std::vector<uint8_t>(payload.begin(), payload.end())});
+  send_command_({pt, LevoitPacketType::SEND_MESSAGE, payload});
 }
 
 

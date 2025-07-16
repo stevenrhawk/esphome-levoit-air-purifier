@@ -76,19 +76,21 @@ typedef struct LevoitCommand {
 using PayloadTypeOverrideMap = std::unordered_map<LevoitDeviceModel, std::unordered_map<LevoitPayloadType, uint32_t>>;
 
 static const PayloadTypeOverrideMap MODEL_SPECIFIC_PAYLOAD_TYPES = {
-    {LevoitDeviceModel::CORE_400S,
-     {
-         {LevoitPayloadType::STATUS_REQUEST, 0x01b140}, {LevoitPayloadType::STATUS_RESPONSE, 0x01b040},
-         // ... add other model-specific overrides here ...
-     }},
-     {LevoitDeviceModel::CORE_200S,
-     {
-         {LevoitPayloadType::STATUS_REQUEST, 0x016140}, {LevoitPayloadType::STATUS_RESPONSE, 0x016140},
-         {LevoitPayloadType::AUTO_STATUS, 0x016040}
-         // ... add other model-specific overrides here ...
-     }},
-    // ... add other device models and their overrides here ...
+    {LevoitDeviceModel::CORE_400S, {
+        {LevoitPayloadType::STATUS_REQUEST,  0x01B140},
+        {LevoitPayloadType::STATUS_RESPONSE, 0x01B040},
+    }},
+    {LevoitDeviceModel::CORE_300S, {   // ← add this block
+        {LevoitPayloadType::SET_FAN_MODE,     0x0160A5},   // manual / sleep / auto
+        {LevoitPayloadType::SET_FAN_AUTO_MODE,0x0166A5},   // “Default / Quiet / Efficient”
+    }},
+    {LevoitDeviceModel::CORE_200S, {
+        {LevoitPayloadType::STATUS_REQUEST,  0x016140},
+        {LevoitPayloadType::STATUS_RESPONSE, 0x016040},
+        {LevoitPayloadType::AUTO_STATUS,     0x016040},
+    }},
 };
+
 
 class Levoit : public Component, public uart::UARTDevice {
  public:

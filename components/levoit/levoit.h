@@ -16,22 +16,29 @@ namespace levoit {
 enum class LevoitDeviceModel : uint8_t { NONE, CORE_200S, CORE_300S, CORE_400S };
 enum class LevoitPacketType : uint8_t { SEND_MESSAGE = 0x22, ACK_MESSAGE = 0x12, ERROR = 0x52 };
 enum class LevoitPayloadType : uint32_t {
-  STATUS_REQUEST = 0x013140,
-  STATUS_RESPONSE = 0x013040,
-  AUTO_STATUS = 0x016040, // I only know this value for 200S, so might be wrong
-  SET_FAN_AUTO_MODE = 0x01E6A5,
-  SET_FAN_MANUAL = 0x0160A2,
-  SET_FAN_MODE = 0x01E0A5,
-  SET_DISPLAY_LOCK = 0x0100D1,
-  SET_WIFI_STATUS_LED = 0x0129A1,
-  SET_POWER_STATE = 0x0100A0,
-  SET_SCREEN_BRIGHTNESS = 0x0105A1,
-  SET_FILTER_LED = 0x01E2A5,
-  SET_RESET_FILTER = 0x01E4A5,
-  TIMER_STATUS = 0x0165A2,
-  SET_TIMER_TIME = 0x0164A2,
-  TIMER_START_OR_CLEAR = 0x0166A2,
-  SET_NIGHTLIGHT = 0x0103A0
+  /* ---------- Core‑300 S (FW v2, 2024+) ---------- */
+  STATUS_REQUEST        = 0x013240,
+  STATUS_RESPONSE       = 0x013140,
+  AUTO_STATUS           = 0x016140,   // confirmed on your trace
+
+  /* Fan control ---------------------------------------------------------- */
+  SET_FAN_AUTO_MODE     = 0x01E7A5,   // auto‑mode (Default / Quiet / Efficient)
+  SET_FAN_MANUAL        = 0x0161A2,   // manual RPM (payload[3] = 1‑4)
+  SET_FAN_MODE          = 0x01E1A5,   // switch Manual / Sleep / Auto
+
+  /* Toggles & settings ----------------------------------------------------*/
+  SET_POWER_STATE       = 0x0100A6,   // 0 = off, 1 = on
+  SET_DISPLAY_LOCK      = 0x0101D1,   // payload[15] = 0/1
+  SET_SCREEN_BRIGHTNESS = 0x0106A1,   // payload[8]  = 0 / 0x64
+  SET_NIGHTLIGHT        = 0x0104A0,   // payload[8]  = 0 / 0x32 / 0x64
+  SET_WIFI_STATUS_LED   = 0x012AA1,
+
+  /* Misc ------------------------------------------------------------------*/
+  SET_FILTER_LED        = 0x01E3A5,
+  SET_RESET_FILTER      = 0x01E5A5,
+  TIMER_STATUS          = 0x0166A2,
+  SET_TIMER_TIME        = 0x0165A2,
+  TIMER_START_OR_CLEAR  = 0x0167A2
 };
 
 enum class LevoitState : uint32_t {
@@ -76,19 +83,21 @@ typedef struct LevoitCommand {
 using PayloadTypeOverrideMap = std::unordered_map<LevoitDeviceModel, std::unordered_map<LevoitPayloadType, uint32_t>>;
 
 static const PayloadTypeOverrideMap MODEL_SPECIFIC_PAYLOAD_TYPES = {
-    {LevoitDeviceModel::CORE_400S,
-     {
-         {LevoitPayloadType::STATUS_REQUEST, 0x01b140}, {LevoitPayloadType::STATUS_RESPONSE, 0x01b040},
-         // ... add other model-specific overrides here ...
-     }},
-     {LevoitDeviceModel::CORE_200S,
-     {
-         {LevoitPayloadType::STATUS_REQUEST, 0x016140}, {LevoitPayloadType::STATUS_RESPONSE, 0x016140},
-         {LevoitPayloadType::AUTO_STATUS, 0x016040}
-         // ... add other model-specific overrides here ...
-     }},
-    // ... add other device models and their overrides here ...
+    {LevoitDeviceModel::CORE_400S, {
+        {LevoitPayloadType::STATUS_REQUEST,  0x01B140},
+        {LevoitPayloadType::STATUS_RESPONSE, 0x01B040},
+    }},
+    {LevoitDeviceModel::CORE_300S, {   // ← add this block
+        {LevoitPayloadType::SET_FAN_MODE,     0x0160A5},   // manual / sleep / auto
+        {LevoitPayloadType::SET_FAN_AUTO_MODE,0x0166A5},   // “Default / Quiet / Efficient”
+    }},
+    {LevoitDeviceModel::CORE_200S, {
+        {LevoitPayloadType::STATUS_REQUEST,  0x016140},
+        {LevoitPayloadType::STATUS_RESPONSE, 0x016040},
+        {LevoitPayloadType::AUTO_STATUS,     0x016040},
+    }},
 };
+
 
 class Levoit : public Component, public uart::UARTDevice {
  public:

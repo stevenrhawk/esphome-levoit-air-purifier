@@ -328,13 +328,20 @@ void Levoit::handle_payload_(LevoitPayloadType type, uint8_t *payload, size_t le
       }
 
       if (payload[1] != pm25_value) {
-        set_bit_(current_state_, true, LevoitState::PM25_CHANGE);
         pm25_value = payload[1];
+        set_bit_(current_state_, true, LevoitState::PM25_CHANGE);
       }
 
       if (payload[19] != air_quality) {
-        set_bit_(current_state_, true, LevoitState::AIR_QUALITY_CHANGE);
         air_quality = payload[19];
+        set_bit_(current_state_, true, LevoitState::AIR_QUALITY_CHANGE);
+      }
+
+      if (this->pm25_sensor_ != nullptr) {
+          this->pm25_sensor_->publish_state(pm25_value);
+      }
+      if (this->air_quality_sensor_ != nullptr) {
+          this->air_quality_sensor_->publish_state(air_quality);
       }
 
       break;
@@ -353,9 +360,14 @@ void Levoit::handle_payload_(LevoitPayloadType type, uint8_t *payload, size_t le
 
   if (previousState != current_state_) {
     for (auto &listener : state_listeners_) {
-      if (previousState & listener.mask != current_state_ & listener.mask)
+      if ((previousState & listener.mask) != (current_state_ & listener.mask))
         listener.func(current_state_);
     }
+    // After notifying, clear the one-shot change bits
+    if (current_state_ & static_cast<uint32_t>(LevoitState::PM25_CHANGE))
+      current_state_ &= ~static_cast<uint32_t>(LevoitState::PM25_CHANGE);
+    if (current_state_ & static_cast<uint32_t>(LevoitState::AIR_QUALITY_CHANGE))
+      current_state_ &= ~static_cast<uint32_t>(LevoitState::AIR_QUALITY_CHANGE);
   }
 }
 

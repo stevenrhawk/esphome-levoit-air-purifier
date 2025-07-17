@@ -4,6 +4,7 @@
 #include "esphome/core/defines.h"
 #include "esphome/core/helpers.h"
 #include "esphome/components/uart/uart.h"
+#include "esphome/components/sensor/sensor.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/queue.h"
 #include <freertos/semphr.h>
@@ -87,8 +88,6 @@ static const PayloadTypeOverrideMap MODEL_SPECIFIC_PAYLOAD_TYPES = {
         {LevoitPayloadType::STATUS_REQUEST,  0x01B140},
         {LevoitPayloadType::STATUS_RESPONSE, 0x01B040},
     }},
-<<<<<<< HEAD
-=======
     {LevoitDeviceModel::CORE_300S, {
         {LevoitPayloadType::STATUS_REQUEST,        0x013240},
         {LevoitPayloadType::STATUS_RESPONSE,       0x013140},
@@ -110,7 +109,6 @@ static const PayloadTypeOverrideMap MODEL_SPECIFIC_PAYLOAD_TYPES = {
         {LevoitPayloadType::TIMER_START_OR_CLEAR,  0x0167A2}
     }},
 
->>>>>>> a04ddee39b979fc22ac6a17cea4b614958f6f0bd
     {LevoitDeviceModel::CORE_200S, {
         {LevoitPayloadType::STATUS_REQUEST,  0x016140},
         {LevoitPayloadType::STATUS_RESPONSE, 0x016040},
@@ -129,6 +127,8 @@ class Levoit : public Component, public uart::UARTDevice {
   void set_command_delay(int delay);
   void set_command_timeout(int timeout);
   void set_status_poll_seconds(int interval);
+  void set_pm25_sensor(sensor::Sensor *s) { this->pm25_sensor_ = s; }
+  void set_air_quality_sensor(sensor::Sensor *s) { this->air_quality_sensor_ = s; }
   void register_state_listener(uint32_t changeMask, const std::function<void(uint32_t currentBits)> &func);
   void set_request_state(uint32_t onMask, uint32_t offMask, bool aquireMutex = true);
   uint32_t get_model_specific_payload_type(LevoitPayloadType type);
@@ -142,6 +142,8 @@ class Levoit : public Component, public uart::UARTDevice {
   uint8_t air_quality = 255;
 
  protected:
+  sensor::Sensor *pm25_sensor_{nullptr};
+  sensor::Sensor *air_quality_sensor_{nullptr};
   QueueHandle_t rx_queue_;
   QueueHandle_t tx_queue_;
   SemaphoreHandle_t stateChangeMutex_;

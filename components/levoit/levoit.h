@@ -87,6 +87,30 @@ static const PayloadTypeOverrideMap MODEL_SPECIFIC_PAYLOAD_TYPES = {
         {LevoitPayloadType::STATUS_REQUEST,  0x01B140},
         {LevoitPayloadType::STATUS_RESPONSE, 0x01B040},
     }},
+<<<<<<< HEAD
+=======
+    {LevoitDeviceModel::CORE_300S, {
+        {LevoitPayloadType::STATUS_REQUEST,        0x013240},
+        {LevoitPayloadType::STATUS_RESPONSE,       0x013140},
+        {LevoitPayloadType::AUTO_STATUS,           0x016140},
+    
+        {LevoitPayloadType::SET_FAN_AUTO_MODE,     0x01E7A5},   // ← sniffed value
+        {LevoitPayloadType::SET_FAN_MANUAL,        0x0161A2},   // ← sniffed value
+        {LevoitPayloadType::SET_FAN_MODE,          0x01E1A5},   // ← sniffed value
+    
+        {LevoitPayloadType::SET_POWER_STATE,       0x0100A6},   // ← sniffed value
+        {LevoitPayloadType::SET_DISPLAY_LOCK,      0x0101D1},   // ← sniffed value
+        {LevoitPayloadType::SET_SCREEN_BRIGHTNESS, 0x0106A1},   // ← sniffed value
+        {LevoitPayloadType::SET_NIGHTLIGHT,        0x0104A0},   // ← sniffed value
+        {LevoitPayloadType::SET_WIFI_STATUS_LED,   0x012AA1},
+        {LevoitPayloadType::SET_FILTER_LED,        0x01E3A5},
+        {LevoitPayloadType::SET_RESET_FILTER,      0x01E5A5},
+        {LevoitPayloadType::TIMER_STATUS,          0x0166A2},
+        {LevoitPayloadType::SET_TIMER_TIME,        0x0165A2},
+        {LevoitPayloadType::TIMER_START_OR_CLEAR,  0x0167A2}
+    }},
+
+>>>>>>> a04ddee39b979fc22ac6a17cea4b614958f6f0bd
     {LevoitDeviceModel::CORE_200S, {
         {LevoitPayloadType::STATUS_REQUEST,  0x016140},
         {LevoitPayloadType::STATUS_RESPONSE, 0x016040},

@@ -87,10 +87,6 @@ static const PayloadTypeOverrideMap MODEL_SPECIFIC_PAYLOAD_TYPES = {
         {LevoitPayloadType::STATUS_REQUEST,  0x01B140},
         {LevoitPayloadType::STATUS_RESPONSE, 0x01B040},
     }},
-    {LevoitDeviceModel::CORE_300S, {   // ← add this block
-        {LevoitPayloadType::SET_FAN_MODE,     0x0160A5},   // manual / sleep / auto
-        {LevoitPayloadType::SET_FAN_AUTO_MODE,0x0166A5},   // “Default / Quiet / Efficient”
-    }},
     {LevoitDeviceModel::CORE_200S, {
         {LevoitPayloadType::STATUS_REQUEST,  0x016140},
         {LevoitPayloadType::STATUS_RESPONSE, 0x016040},
@@ -150,7 +146,7 @@ class Levoit : public Component, public uart::UARTDevice {
                           uint8_t purpose_code,
                           uint8_t byte15_value);
   void process_raw_command_(LevoitCommand command);
-  void send_raw_command(LevoitCommand command);
+  void send_raw_command(std::vector<uint8_t> &command);
   void set_bit_(uint32_t &state, bool condition, LevoitState bit);
   bool validate_message_();
   void handle_payload_(LevoitPayloadType type, uint8_t *payload, size_t len);

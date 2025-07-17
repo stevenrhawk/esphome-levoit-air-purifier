@@ -327,8 +327,10 @@ void Levoit::handle_payload_(LevoitPayloadType type, uint8_t *payload, size_t le
         set_bit_(current_state_, payload[4] == 0x04, LevoitState::FAN_SPEED4);
       }
 
-      if (payload[1] != pm25_value) {
-        pm25_value = payload[1];
+      // Core-300 S 2024+ FW: PM2.5 now lives in byte 11 (0-500 ug/m³)
+      uint8_t new_pm25 = payload[11];
+      if (new_pm25 != pm25_value) {
+        pm25_value = new_pm25;
         set_bit_(current_state_, true, LevoitState::PM25_CHANGE);
       }
 
